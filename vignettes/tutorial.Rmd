@@ -1,0 +1,183 @@
+---
+title: "A reference feature based method for quantification and identification of LC-MS based untargeted metabolomics"
+author: "luanenhui"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  warning = FALSE,
+  message=FALSE
+)
+```
+
+## Introduction
+
+RFQI is a LC-MS/MS based untargeted metabolomics analysis pipeline.
+
+## Module
+
+1. build reference feature table
+
+2. Mapping MS2 to reference feature table
+
+3. Build MS2 similarity distribution
+
+4. Idenfification
+
+5. Quantification
+
+
+### build reference feature table
+
+```{r}
+library(RFQI)
+options(stringsAsFactors = TRUE)
+```
+
+First, we need to build a reference a feature table using a set of mzxml files.
+
+```{r, include=TRUE}
+files <- dir(system.file(package="RFQI", dir="extdata"), 
+              full.name=TRUE, 
+              pattern="mzXML$")
+param = new("ParamSet", binSize=0.25, peakwidth=c(2,30), ppm=10, noise=0, absMz=0.005, absRt=15)
+```
+
+We also need to set a reference mzXML
+
+```{r}
+refFile = files[1]
+files = files[-1]
+```
+
+Then we extract peaks from mzXML files and group them. This step is time-consuming, we can save the result for later use
+
+```{r}
+features = getPeakRange_multipleFiles(f.in = files, ref = refFile, param=param, cores=2)
+# save(features, ref, files, file="test_features.rData")
+```
+
+features is a list, containing two data frame. Peaks are original peaks extracted from mzXML files by centwave, group_FT are features by 
+combing adjacent peaks.
+
+```{r}
+str(features, max.level = 1)
+```
+
+We have generate a features, so you can simply load it into R enviroment
+```{r}
+# data("features", package="RFQI")
+```
+
+### Mapping MS2 to a reference feature table
+
+*After extracting features from MS1 spectrum, we need to mapping MS2 spectrum to features for annotating.*
+
+First, we need extract MS2 spectrum from mzXML files. These files can be files used for constructing feature table, also can be other files,
+as soon as they are generated in the same enviroment (e.g. same tissue type, same LC-MS/MS parameter)
+
+getMS2FromFiles function receive mzXML files as input, and output a list. 
+
+```{r}
+files <- dir(system.file(package="RFQI", dir="extdata"), full.name=TRUE, pattern="mzXML$")
+MS2 = getMS2FromFiles(files=files, ref_file = refFile)
+str(MS2, max.level = 1)
+```
+
+Before we map MS2 to features, we can filter out some MS2
+
+```{r}
+mzCount = unlist(lapply(MS2$MS2, nrow)) # A qualified MS2 spectrum should have at least 3 fragments
+mzMaxInt = unlist(lapply(MS2$MS2, function(x){max(x[,2])}))  # A qualified MS2 spectrum should have at least one fragment whose intensity greater than 32 (user defined)
+CountFlag = !(mzCount %in% c(0,1,2))
+IntFlag = mzMaxInt > 50
+flag = CountFlag & IntFlag
+
+MS2$MS2 = MS2$MS2[flag]
+MS2$precursorInfo = MS2$precursorInfo[flag,]
+```
+
+We also need  set names for each MS2
+```{r}
+names(MS2$MS2) = rownames(MS2$precursorInfo) = sapply(1:nrow(MS2$precursorInfo),
+convert_num_to_char, prefix = "M", n=nchar(nrow(MS2$precursorInfo)))
+```
+
+Next, we align MS2 to feature based on precursor's m/z and rt.
+
+```{r}
+db.MS2 = align_MS2_to_MS1(ms2Info = MS2, features = features)
+```
+
+### Build MS2 similarity distribution
+
+* RFQI use multiple MS2 to identify one feature. First, we need to build an MS2 similarity distribution using MS2 belonging to the same feature *
+
+Next, we calculate MS2 similarity matrix belonging to same feature
+The time complexity is O(n2), where n represents the number of MS2 belonging the the same feature, we can limit the max number using maxMS2 parameter
+
+```{r}
+# we can calcalate similarity distribution for one feature
+idx = getFeatureHasMS2(MS2DB=db.MS2, n=2)  # n is the minimum number of MS2 belonging to the same feature
+distri = get_ms2Cor_inner(MS2DB = db.MS2, cores1=1, cores2=3, maxMS2 = 100, idx=idx[1])
+```
+
+```{r}
+plot(density(distri[[1]][,1], na.rm=TRUE), main="MS2 similarity distribution", col="red", xlab="cosine similarity score")
+for (i in 2:nrow(distri[[1]])){
+  lines(density(distri[[1]][,i], na.rm=TRUE), col="red")
+}
+```
+
+If we do not appoint feature ID, get_ms2Cor_inner() will compute similarity matrix for all features having minimum MS2
+
+```{r}
+ms2InnerCor = get_ms2Cor_inner(MS2DB = db.MS2,cores1 = 3, cores2 = 1, n=2, maxMS2 = 100)
+```
+
+### Identification
+
+Now, we can identify features.
+Identification is based on existing standard metabolites MS2 spectrum. We have offer a standard MS2 spectrum database.
+
+```{r}
+data("spectrumDB", package = "RFQI")
+str(spectrumDB, max.level = 1)
+```
+
+First, we need match features' m/z and standar metabolites m/z. As metabolites have multiple possible adduct when ionization, we need appoint the liquidChromatography column type and ESI mode (i.e, positive or negative). RFQI has offer a list of adduct corresponding to each colum-mode, so you just need to set adduct="RP_pos", etc.
+
+```{r}
+anno = get_identify(lib = spectrumDB, MS2DB = db.MS2, MS2_inner_cor = ms2InnerCor, absMz = 0.045, adduct="RP_pos", cores=3)
+str(anno, max.level = 1)
+```
+
+### Quantification
+
+We have build a reference feature table, and using MS2 to annotate it. All we need to do for following mzXML files is quantify according to feature table.
+
+```{r}
+result = list()
+for (file in files){
+  result[[file]] = getPeaks_L(file = file, peak_range = features$group_FT, ref_file = refFile, MS1=TRUE, step=0.1, MS2=FALSE)$peaks[,"into"]
+}
+intensity = do.call(cbind,result)
+colnames(intensity) = names(result)
+str(result, max.level = 1)
+```
+
+
+
+
+
+
+
+

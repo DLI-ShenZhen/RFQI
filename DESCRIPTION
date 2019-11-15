@@ -1,0 +1,29 @@
+Package: RFQI
+Title: reference feature based method for Quantification and Identification of LC-MS based untargeted metabolomics
+Version: 1.0
+Author: Enhui Luan
+Maintainer: Enhui Luan <luanenhui2009@gmail.com>
+Description: LC-MS/MS based untarget metabolomics analysis.
+Depends: 
+    R (>= 3.5.0)
+Imports:
+    parallel,
+    xcms (>= 3.4.4),
+    MSnbase (>= 2.8.3),
+    mzR (>= 2.16.1),
+    scales (>= 1.0.0),
+    methods,
+    RColorBrewer,
+    pheatmap,
+    Biobase,
+    stats,
+    utils
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+Suggests: 
+    testthat,
+    knitr,
+    rmarkdown
+RoxygenNote: 6.1.1
+VignetteBuilder: knitr

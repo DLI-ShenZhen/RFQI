@@ -1,4 +1,4 @@
-
+### The first version of this package is called *XYMeta*, but later it will be changed into *RFQI*  
 
 XYMeta depends on xcms
 

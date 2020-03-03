@@ -214,10 +214,12 @@ group_FT.FUN = function(i, df, absMz=0.01, absRt=15){
   return(temp_group)
 }
 
+detectCores = function(){future::availableCores()}
+
 #' group overlap peaks in a peak table
 #' getPeakRange_singleFiles is to group peaks from a peaks table
 #' 
-#' @importFrom parallel mclapply makeCluster parLapply detectCores
+#' @importFrom parallel mclapply makeCluster parLapply
 #' @param peaks matrix
 #' @param cores numeric, for parallel computing
 #' @param param ParamSet object

@@ -200,9 +200,11 @@ checkFT = function(features, idx){
   return(peaks)
 }
 
+detectCores = function(){future::availableCores()}
+
 #' Compute similarity score of two sets of MS2 spectrum
 #' 
-#' @importFrom parallel mclapply makeCluster parLapply detectCores
+#' @importFrom parallel mclapply makeCluster parLapply 
 #' @param MS2_set1 list containing multiple MS2 spectrum
 #' @param MS2_set2 list containing multiple MS2 spectrum
 #' @param cores threads for parallel computing

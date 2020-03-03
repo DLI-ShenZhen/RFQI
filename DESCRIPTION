@@ -5,13 +5,13 @@ Author: Enhui Luan
 Maintainer: Enhui Luan <luanenhui2009@gmail.com>
 Description: LC-MS/MS based untarget metabolomics analysis.
 Depends: 
-    R (>= 3.5.0)
+    R (>= 3.4.0)
 Imports:
     parallel,
-    xcms (>= 3.4.4),
-    MSnbase (>= 2.8.3),
-    mzR (>= 2.16.1),
-    scales (>= 1.0.0),
+    xcms,
+    MSnbase,
+    mzR,
+    scales,
     methods,
     RColorBrewer,
     pheatmap,

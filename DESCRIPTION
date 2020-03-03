@@ -9,7 +9,7 @@ Depends:
 Imports:
     future,
     parallel,
-    xcms, 
+    xcms,
     MSnbase,
     mzR,
     scales,

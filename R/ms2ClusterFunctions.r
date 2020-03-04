@@ -60,7 +60,7 @@ get_ms2Cor_inner = function(MS2DB, idx=NULL, n=2, cores1=1, cores2=1, ppm=30, sn
   
   if (is.null(idx)) idx=getFeatureHasMS2(MS2DB=MS2DB, n=n)
   
-  if (cores >= detectCores()) cores=detectCores()-1
+  if (cores >= availableCores()) cores=availableCores()-1
   cl = makeCluster(cores)
   # result = mclapply(idx, function(id){
   #   MS2_set = checkMS2(id, MS2DB = MS2DB)$MS2
@@ -157,7 +157,7 @@ getTypeMS2 = function(MS2DB, corMatrix, idx=NULL, include.all = TRUE){
 #' @keywords internal
 get_MS2_cor_with_mz = function(MS2_set, cores=2, absMz=0.04){
   
-  if (cores >= detectCores()) cores=detectCores()-1
+  if (cores >= availableCores()) cores=availableCores()-1
   cl = makeCluster(cores)
   
   score = parLapply(cl, MS2_set, function(x){

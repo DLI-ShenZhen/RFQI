@@ -4,7 +4,8 @@
 \alias{chrom_plot}
 \title{plot EIC}
 \usage{
-chrom_plot(f.in, refFile = NULL, features, idx, mzr = NULL, rtr = NULL)
+chrom_plot(f.in, refFile = NULL, features, idx, mzr = NULL,
+  rtr = NULL)
 }
 \arguments{
 \item{f.in}{path of mzxml files}

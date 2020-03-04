@@ -35,8 +35,6 @@ add_adduct = function(lib, type="RP_pos"){
 #' 
 #' Compute possibility of one features generates certain (often) MS2, if possibility greater than a threshold, we say this feature is the metabolite
 #' 
-#' @importFrom stats sd t.test
-#' @importFrom utils data
 #' @param score similarity vector of one spectrum with multiple MS2
 #' @param ms2_inner_score similarity matrix of multiple MS2
 #' @param ratio ratio threshold, is the minimum possibility of feature generating certain MS2
@@ -88,7 +86,7 @@ getFDR = function(score, ms2_inner_score, ratio=0.1){
 get_identify = function(lib, MS2DB, MS2_inner_cor, MS1_idx=NULL, absMz = 0.015,
                         adduct="RP_pos", cores=1){
   meta.precursor = add_adduct(lib=lib, type = adduct)
-  if (cores >= detectCores()) cores=detectCores()-1
+  if (cores >= availableCores()) cores=availableCores()-1
   cl = makeCluster(cores)
   
   # if appoint MS1_idx, only identify MS1_idx, else identify all features with MS2 

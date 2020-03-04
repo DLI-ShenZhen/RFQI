@@ -3,8 +3,6 @@
 #' getPeaks_L is to get peaks and/or MS2 based on peak_range
 #' if have ref_file, peaks and MS2 is RT-corrected
 #' 
-#' @importFrom tools md5sum
-#' @import xcms
 #' @param file path of one mzxml file
 #' @param peak_range dataframe, each row reprensents a peak/feature area, commonly result from \code{getPeakRange_multiples}
 #' @param ref_file path of referece mzxml file, using to do retention time alignment
@@ -130,15 +128,13 @@ getMS2FromFiles = function(files, ref_file=NULL){
 #' 
 #' alignMS2_to_MS2 is to align MS2 database to MS1 index according to ["mzmin","mzmax","rtmin","rtmax"]
 #' 
-#' @importFrom stats median runmed
-#' @importFrom utils tail
 #' @param ms2Info result of getMS2FromFiles
 #' @param features result of getPeakRange_multipleFiles
 #' @param cores numeric, for parallel computing
 #' @return list
 #' @export
 align_MS2_to_MS1 = function(ms2Info, features, cores=3){
-  if (cores >= detectCores()) cores=detectCores()-1
+  if (cores >= availableCores()) cores=availableCores()-1
   cl = makeCluster(cores)
   
   options(stringsAsFactors = FALSE)

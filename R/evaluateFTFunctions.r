@@ -14,7 +14,6 @@ summary_L = function(df){
 
 #' Function plotArea is used to plot feature area of one FT or two
 #' 
-#' @importFrom scales alpha
 #' @param refPeaks dataframe or matrix containing columns of c("mzmin","mzmax","rtmin","rtmax")
 #' @param group factor, length as row of refPeaks, indicating every features' group
 #' @param main title of plot
@@ -80,9 +79,6 @@ plotArea = function(refPeaks, group=NULL, main="", mzr=NULL, rtr=NULL){
 
 #' Function plotFeatureMap is to plot Feature, peaks, and MS2 point in a figure
 #' 
-#' @import pheatmap
-#' @import grDevices 
-#' @import graphics
 #' @param idx index
 #' @param MS2_inner_cor MS2 similarity matrix for MS2 clustering
 #' @param features containing peaks and features
@@ -200,11 +196,9 @@ checkFT = function(features, idx){
   return(peaks)
 }
 
-detectCores = function(){future::availableCores()}
 
 #' Compute similarity score of two sets of MS2 spectrum
 #' 
-#' @importFrom parallel mclapply makeCluster parLapply 
 #' @param MS2_set1 list containing multiple MS2 spectrum
 #' @param MS2_set2 list containing multiple MS2 spectrum
 #' @param cores threads for parallel computing
@@ -229,7 +223,7 @@ get_MS2_cor = function(MS2_set1, MS2_set2, cores=2){
   #   return(score2)
   # }, mc.cores=cores)
   
-  if (cores >= detectCores()) cores=detectCores()-1
+  if (cores >= availableCores()) cores=availableCores()-1
   cl = makeCluster(cores)
   
   score = parLapply(cl, MS2_set1, function(x){

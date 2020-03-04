@@ -53,10 +53,6 @@ setClass("ParamSet", slots=list(peakwidth="numeric", ppm="numeric", noise="numer
 #' get peaks from multiple samples(f.in)
 #'
 #' detect peaks from multiple sample by centwave method
-#' @importFrom xcms CentWaveParam ObiwarpParam
-#' @importFrom MSnbase readMSData selectFeatureData centroided
-#' @importFrom xcms findChromPeaks
-#' @importFrom xcms chromPeaks adjustRtime
 #' @param f.in a vertor contains paths of mzxml files
 #' @param ref Path of reference sample for rentention time alignment
 #' @param param ParamSet class, must contains ppm, peakwidth, and noise, these three parameter are for peak detection Using Centwave method
@@ -214,12 +210,9 @@ group_FT.FUN = function(i, df, absMz=0.01, absRt=15){
   return(temp_group)
 }
 
-detectCores = function(){future::availableCores()}
-
 #' group overlap peaks in a peak table
 #' getPeakRange_singleFiles is to group peaks from a peaks table
 #' 
-#' @importFrom parallel mclapply makeCluster parLapply
 #' @param peaks matrix
 #' @param cores numeric, for parallel computing
 #' @param param ParamSet object
@@ -230,7 +223,7 @@ getPeakRange_singFile = function(peaks, cores=2, param=new("ParamSet")){
   absMz = param@absMz
   absRt = param@absRt
   
-  if (cores >= detectCores()) cores=detectCores()-1
+  if (cores >= availableCores()) cores=availableCores()-1
   cl = makeCluster(cores)
   
   if (!("id" %in% colnames(peaks))){peaks = cbind(peaks, id=1:nrow(peaks))}

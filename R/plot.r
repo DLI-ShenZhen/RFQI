@@ -1,7 +1,5 @@
 #' plot EIC
 #' 
-#' @import RColorBrewer
-#' @importFrom Biobase featureData
 #' @param f.in path of mzxml files
 #' @param refFile path of reference mzXML files, using for retention time alignment
 #' @param mzr m/z range, if appointed, plot mzr area EIC

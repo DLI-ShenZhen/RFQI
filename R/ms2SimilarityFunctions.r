@@ -110,7 +110,7 @@ GetMatchResult = function(spec.exp, spec.lib, sn=3, ppm=30){
 #' @export
 get_multiple_ms2Cor = function(MS2_set, cores=2, ppm=30, sn=3){
   
-  if (cores >= detectCores()) cores=detectCores()-1
+  if (cores >= availableCores()) cores=availableCores()-1
   cl = makeCluster(cores)
   
   # score = mclapply(1:(length(MS2_set)-1), function(i){

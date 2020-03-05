@@ -24,5 +24,6 @@
 #' 
 loadPackage = function(){}
 
+platform = Sys.info()[['sysname']]
 
 

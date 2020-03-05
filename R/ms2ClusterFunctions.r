@@ -56,25 +56,35 @@ checkMS2 = function(idx, MS2DB){
 #' @param maxMS2 the max number of MS2 belonging to one feature for computing similarity; if appointed, will random select maxMS2 number MS2
 #' @return list, names of list are feature name, and elements are MS2 similarity matrix of MS2 belonging to the feature
 #' @export
-get_ms2Cor_inner = function(MS2DB, idx=NULL, n=2, cores=1, ppm=30, sn=3, maxMS2=200){
+get_ms2Cor_inner = function(MS2DB, idx=NULL, n=2, cores1=1, cores2=3, ppm=30, sn=3, maxMS2=200){
   
-  if (cores >= availableCores()) cores=availableCores()-1
-  cl = makeCluster(cores)
-  registerPackage(cl)
+  cores1 = min(cores1, availableCores()-1)
+  # cl_1 = makeCluster(cores1)
+  # registerPackage(cl_1)
+  # registerParentVars(cl_1)
+  # clusterExport(cl=cl_1, "checkMS2")
   
   if (is.null(idx)) idx=getFeatureHasMS2(MS2DB=MS2DB, n=n)
-  result = lapply(idx, function(id){
+  
+  result = mclapply(idx, function(id){
     MS2_set = checkMS2(id, MS2DB = MS2DB)$MS2
     if (!is.null(maxMS2)){
       if (length(MS2_set) > maxMS2) MS2_set = sample(MS2_set, maxMS2)
     }
-    corMatrix = get_multiple_ms2Cor(MS2_set = MS2_set, cl=cl, ppm=ppm, sn=sn)
+    
+    cores = min(cores2, availableCores()-1)
+    if (length(MS2_set) < 100 & length(MS2_set)>50) cores = 2
+    if (platform == "Windows") cores = 1
+    if (length(MS2_set) <= 50) cores = 1
+    
+    corMatrix = get_multiple_ms2Cor(MS2_set = MS2_set, cores=cores, ppm=ppm, sn=sn)
     rownames(corMatrix) = colnames(corMatrix) = names(MS2_set)
     corMatrix
-  })
+    
+  }, mc.cores = cores1)
+  
   names(result) = idx
   
-  stopCluster(cl)
   
   return(result)
 }

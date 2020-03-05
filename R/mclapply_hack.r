@@ -9,8 +9,9 @@ registerPackage = function(cl){
     ## Additional packages
     names( sessionInfo()$otherPkgs ))
   
-  lapply(pkg.names, function(x){
-    clusterEvalQ(cl, require(x))
+  parLapply(cl, 1:length(cl), function(xx){
+    lapply(pkg.names, function(yy) {
+      require(yy , character.only=TRUE)})
   })
   
 }

@@ -8,7 +8,8 @@ get_ms2Cor_inner(
   MS2DB,
   idx = NULL,
   n = 2,
-  cores = 1,
+  cores1 = 1,
+  cores2 = 3,
   ppm = 30,
   sn = 3,
   maxMS2 = 200
@@ -21,15 +22,15 @@ get_ms2Cor_inner(
 
 \item{n}{minumum number of MS2 features should have, default is 2}
 
+\item{cores1}{numeric threads for idx parallel computing, e.g. simultaneously analysis cores1 feature}
+
+\item{cores2}{numeric threads for parallel computing MS2 similarity belonging to the same feature}
+
 \item{ppm}{m/z tolerance of MS2}
 
 \item{sn}{signal to noise ratio}
 
 \item{maxMS2}{the max number of MS2 belonging to one feature for computing similarity; if appointed, will random select maxMS2 number MS2}
-
-\item{cores1}{numeric threads for idx parallel computing, e.g. simultaneously analysis cores1 feature}
-
-\item{cores2}{numeric threads for parallel computing MS2 similarity belonging to the same feature}
 }
 \value{
 list, names of list are feature name, and elements are MS2 similarity matrix of MS2 belonging to the feature

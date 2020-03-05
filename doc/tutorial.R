@@ -55,7 +55,7 @@ db.MS2 = align_MS2_to_MS1(ms2Info = MS2, features = features)
 ## -----------------------------------------------------------------------------
 # we can calcalate similarity distribution for one feature
 idx = getFeatureHasMS2(MS2DB=db.MS2, n=2)  # n is the minimum number of MS2 belonging to the same feature
-distri = get_ms2Cor_inner(MS2DB = db.MS2, cores=2, maxMS2 = 100, idx=idx[1])
+distri = get_ms2Cor_inner(MS2DB = db.MS2, cores1=2, cores2=2, maxMS2 = 100, idx=idx[1])
 
 ## -----------------------------------------------------------------------------
 plot(density(distri[[1]][,1], na.rm=TRUE), main="MS2 similarity distribution", col="red", xlab="cosine similarity score")
@@ -64,8 +64,9 @@ for (i in 2:nrow(distri[[1]])){
 }
 
 ## -----------------------------------------------------------------------------
-db.MS2.subset = list(MS2=db.MS2$MS2[1:500], MS2_to_MS1=db.MS2$MS2_to_MS1[1:500,]) # this line is only for test
-ms2InnerCor = get_ms2Cor_inner(MS2DB = db.MS2.subset,cores = 2, n=2, maxMS2 = 100)
+db.MS2.subset = list(MS2=db.MS2$MS2[1:2000], MS2_to_MS1=db.MS2$MS2_to_MS1[1:2000,]) # this line is only for test
+# db.MS2.subset = db.MS2
+ms2InnerCor = get_ms2Cor_inner(MS2DB = db.MS2.subset,cores1 = 2, cores2=2, n=2, maxMS2 = 100)
 
 ## -----------------------------------------------------------------------------
 data("spectrumDB", package = "RFQI")

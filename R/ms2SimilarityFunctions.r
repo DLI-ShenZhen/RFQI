@@ -111,31 +111,47 @@ GetMatchResult = function(spec.exp, spec.lib, sn=3, ppm=30){
 #' @export
 get_multiple_ms2Cor = function(MS2_set, cores=2, cl=NULL, ppm=30, sn=3){
   
-  closeCluster = FALSE
+  # if appoint cl, using parLapply
+  # if appoint cores, using mclapply
+  
   if (is.null(cl)){
-    if (cores >= availableCores()) cores=availableCores()-1
-    cl = makeCluster(cores)
-    registerPackage(cl)
-    closeCluster = TRUE
+    # if (cores >= availableCores()) cores=availableCores()-1
+    # cl = makeCluster(cores)
+    # registerPackage(cl)
+    # closeCluster = TRUE
+    score = mclapply(1:(length(MS2_set)-1), function(i){
+      spec.exp = MS2_set[[i]]; colnames(spec.exp)[1:2] = c("mz", "intensity")
+      
+      # compare spec.exp with it's latter MS2
+      score1 = lapply(MS2_set[(i+1):length(MS2_set)], function(y){
+        if (is.null(y)) return(0)
+        spec.lib = y; colnames(spec.lib)[1:2] = c("mz","intensity")
+        if (nrow(spec.exp)==0 | nrow(spec.lib)==0) return(0)
+        score1 = GetMatchResult(spec.exp=spec.exp, spec.lib=spec.lib, ppm=30, sn=3)
+        return(score1)
+      })
+      score2 = unlist(score1)
+      return(score2)
+    }, mc.cores=cores)
+    
+  } else {
+    registerParentVars(cl)
+    score = parLapply(cl, 1:(length(MS2_set)-1), function(i){
+      spec.exp = MS2_set[[i]]; colnames(spec.exp)[1:2] = c("mz", "intensity")
+      
+      # compare spec.exp with it's latter MS2
+      score1 = lapply(MS2_set[(i+1):length(MS2_set)], function(y){
+        if (is.null(y)) return(0)
+        spec.lib = y; colnames(spec.lib)[1:2] = c("mz","intensity")
+        if (nrow(spec.exp)==0 | nrow(spec.lib)==0) return(0)
+        score1 = GetMatchResult(spec.exp=spec.exp, spec.lib=spec.lib, ppm=30, sn=3)
+        return(score1)
+      })
+      score2 = unlist(score1)
+      return(score2)
+    })
   }
   
-  registerParentVars(cl)
-  score = parLapply(cl, 1:(length(MS2_set)-1), function(i){
-    spec.exp = MS2_set[[i]]; colnames(spec.exp)[1:2] = c("mz", "intensity")
-
-    # compare spec.exp with it's latter MS2
-    score1 = lapply(MS2_set[(i+1):length(MS2_set)], function(y){
-      if (is.null(y)) return(0)
-      spec.lib = y; colnames(spec.lib)[1:2] = c("mz","intensity")
-      if (nrow(spec.exp)==0 | nrow(spec.lib)==0) return(0)
-      score1 = GetMatchResult(spec.exp=spec.exp, spec.lib=spec.lib, ppm=30, sn=3)
-      return(score1)
-    })
-    score2 = unlist(score1)
-    return(score2)
-  })
-  
-  if (closeCluster) {stopCluster(cl)}
   
   result = matrix(nrow=length(MS2_set), ncol=length(MS2_set))
   for (i in 1:length(score)){

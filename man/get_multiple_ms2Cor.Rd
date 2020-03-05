@@ -5,12 +5,14 @@
 \alias{get_MS2_cor_inner}
 \title{compute pair cosine similarity score of multiple MS2}
 \usage{
-get_multiple_ms2Cor(MS2_set, cores = 2, ppm = 30, sn = 3)
+get_multiple_ms2Cor(MS2_set, cores = 2, cl = NULL, ppm = 30, sn = 3)
 }
 \arguments{
 \item{MS2_set}{a list whose elements are MS2 spectrum}
 
 \item{cores}{numeric for parallel computing}
+
+\item{cl}{cluster generate by parallel::makecluster, if cl is NULL, then use cores to makeCluster}
 
 \item{ppm}{m/z tolerance}
 

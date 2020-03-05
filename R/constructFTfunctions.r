@@ -215,16 +215,14 @@ group_FT.FUN = function(i, df, absMz=0.01, absRt=15){
 #' 
 #' @param peaks matrix
 #' @param cores numeric, for parallel computing
+#' @param cl parallel cluster, if cl is null, cluster is built based on cores
 #' @param param ParamSet object
 #' @return list
 #' @export
-getPeakRange_singFile = function(peaks, cores=2, param=new("ParamSet")){
+getPeakRange_singFile = function(peaks, cores=2, cl=NULL, param=new("ParamSet")){
   # peaks = peaks_adjustRT[1:3000,]
   absMz = param@absMz
   absRt = param@absRt
-  
-  if (cores >= availableCores()) cores=availableCores()-1
-  cl = makeCluster(cores)
   
   if (!("id" %in% colnames(peaks))){peaks = cbind(peaks, id=1:nrow(peaks))}
 
@@ -232,7 +230,16 @@ getPeakRange_singFile = function(peaks, cores=2, param=new("ParamSet")){
   peaks = peaks[or,]
 
   # group_FT = mclapply(1:nrow(peaks), group_FT.FUN, df=peaks, absMz=absMz, absRt=absRt, mc.cores=cores)
-  group_FT = parLapply(cl, 1:nrow(peaks), group_FT.FUN, df=peaks, absMz=absMz, absRt=absRt)
+  # parallel computation
+  if (is.null(cl)){
+    if (cores >= availableCores()) cores=availableCores()-1
+    cl = makeCluster(cores)
+    registerPackage()
+    group_FT = parLapply(cl, 1:nrow(peaks), group_FT.FUN, df=peaks, absMz=absMz, absRt=absRt)
+    stopCluster(cl)
+  } else {
+    group_FT = parLapply(cl, 1:nrow(peaks), group_FT.FUN, df=peaks, absMz=absMz, absRt=absRt)
+  }
   
   temp = group_FT
   unique_index = which(sapply(group_FT, length)==1)
@@ -301,6 +308,10 @@ getPeakRange_singFile = function(peaks, cores=2, param=new("ParamSet")){
 #' @export
 getPeakRange_multipleFiles = function(f.in=NULL, peaks=NULL, ref=NULL, param = new("ParamSet"), cores=2, prefix="FT"){
 
+  if (cores >= availableCores()) cores=availableCores()-1
+  cl = makeCluster(cores)
+  registerPackage(cl)
+  
   print("beginning to get peaks from each sample")
   # get peak-range. if peaks is not null, return peaks; else extract peaks from multiple files
   absMz = param@absMz
@@ -321,8 +332,7 @@ getPeakRange_multipleFiles = function(f.in=NULL, peaks=NULL, ref=NULL, param = n
   }
   or = order(as.numeric(peaks_origin[,"mzmin"]))   # sort peaks based on mzmin. Group peaks maily based on m/z.
   peaks_origin_sort = peaks_origin[or,]            # This step is to ensure peaks only compare nearby peaks.
-
-
+  
   # split data for parallel computation
   # small len will cost less time, e.g. when 1000 items split 4 part (len=250), group_FT cost 10s
   # while len=2, 15s; len=1000, 28s
@@ -333,8 +343,10 @@ getPeakRange_multipleFiles = function(f.in=NULL, peaks=NULL, ref=NULL, param = n
   split_data = split.data.frame(peaks_origin_sort, f=f)
 
   # group peaks of each split, return combine_FT
+  registerParentVars(cl)
   startTime = Sys.time()
-  group_FT.split_data = lapply(split_data, getPeakRange_singFile, cores=cores, param=param)
+  group_FT.split_data = lapply(split_data, getPeakRange_singFile, cl=cl, param=param)
+  # group_FT.split_data = lapply(split_data, getPeakRange_singFile, cores=cores, param=param)
   endTime = Sys.time()
   duration = (as.numeric(endTime) - as.numeric(startTime))/60
   print(sprintf("group %s peaks divided into %s part cost %s minutes", nrow(peaks_origin_sort), length(split_data), duration))
@@ -342,21 +354,11 @@ getPeakRange_multipleFiles = function(f.in=NULL, peaks=NULL, ref=NULL, param = n
   combine_FT = do.call(rbind, group_FT.split_data)
   or = order(as.numeric(combine_FT[,"mzmin"]))
   combine_FT = combine_FT[or,]
-
+   
   # group peaks of combine_FT, return group_FT
   startTime = Sys.time()
   # the comment block can also combine/remove peaks, but consume more time
-  group_FT = getPeakRange_singFile(peaks=combine_FT, cores=cores, param=param)
-  # flag = TRUE
-  # while (flag){
-  #   rectUni = group_FT[,c("mzmin","mzmax","rtmin","rtmax")]; mode(rectUni)="numeric"
-  #   rectUni = rectUnique(rectUni);
-  #   flag = length(which(!rectUni)) > 0
-  #   group_FT = getPeakRange_singFile(peaks=group_FT, cores=cores, absMz=absMz, absRt=absRt)
-  #   or = order(as.numeric(group_FT[,"mzmin"]))
-  #   group_FT = group_FT[or,]
-  #
-  # }
+  group_FT = getPeakRange_singFile(peaks=combine_FT, cl=cl, param=param)
 
   # remove/combine overlap features
   # group_FT = combine_FT
@@ -388,7 +390,7 @@ getPeakRange_multipleFiles = function(f.in=NULL, peaks=NULL, ref=NULL, param = n
       unique_group = group_FT[-anchor_point,,drop=FALSE]
       overlap_group = group_FT[anchor_point,,drop=FALSE]
 
-      overlap_group = getPeakRange_singFile(peaks=overlap_group, cores=cores, param=new("ParamSet", absMz=0, absRt=0))
+      overlap_group = getPeakRange_singFile(peaks=overlap_group, cl=cl, param=new("ParamSet", absMz=0, absRt=0))
       group_FT = rbind(unique_group, overlap_group)
 
       or = order(as.numeric(group_FT[,"mzmin"]))
@@ -405,7 +407,9 @@ getPeakRange_multipleFiles = function(f.in=NULL, peaks=NULL, ref=NULL, param = n
   print(sprintf("group %s peaks divided into 1 part cost %s minutes", nrow(combine_FT), duration))
 
   rownames(group_FT) = sapply(1:nrow(group_FT), convert_num_to_char, n=5, prefix=prefix)
-
+  
+  stopCluster(cl)
+  
   return(list(group_FT=group_FT, peaks=peaks_origin))
-
+  
 }

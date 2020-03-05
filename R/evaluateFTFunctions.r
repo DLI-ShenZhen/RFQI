@@ -225,6 +225,7 @@ get_MS2_cor = function(MS2_set1, MS2_set2, cores=2){
   
   if (cores >= availableCores()) cores=availableCores()-1
   cl = makeCluster(cores)
+  clusterEvalQ(cl, "require(RFQI)")
   
   score = parLapply(cl, MS2_set1, function(x){
     spec.exp = as.matrix(x);
@@ -242,6 +243,7 @@ get_MS2_cor = function(MS2_set1, MS2_set2, cores=2){
     score2 = unlist(score1)
     return(score2)
   })
+  stopCluster(cl)
   
   score = do.call(rbind, score)
   return(score)

@@ -73,6 +73,7 @@ getPeaks_L = function(file, peak_range=NULL,
     peaks[,"mz"] = apply(peaks[,c("mzmin","mzmax"),drop=FALSE], 1, median)
     peaks[,"rt"] = apply(peaks[,c("rtmin","rtmax"),drop=FALSE], 1, median)
     peaks = cbind(peaks, sample=1)
+    rownames(peaks) = rownames(peak_range)
     # peaks = subset(peaks, subset=peaks[,"into"]!=0)
   } else {
     peaks = NA
@@ -136,6 +137,7 @@ getMS2FromFiles = function(files, ref_file=NULL){
 align_MS2_to_MS1 = function(ms2Info, features, cores=3){
   if (cores >= availableCores()) cores=availableCores()-1
   cl = makeCluster(cores)
+  registerPackage(cl)
   
   options(stringsAsFactors = FALSE)
   # peak_range = features$group_FT
@@ -185,6 +187,7 @@ align_MS2_to_MS1 = function(ms2Info, features, cores=3){
   #   return(rt_filter)
   # }, mc.cores=cores)
   
+  registerParentVars(cl)
   Match = parLapply(cl, 1:nrow(feature_table), function(idx){
     ref = feature_table[idx,,drop=TRUE]
 
@@ -212,6 +215,8 @@ align_MS2_to_MS1 = function(ms2Info, features, cores=3){
     }
     return(rt_filter)
   })
+  
+  stopCluster(cl)
   
   Match = unlist(Match)
   # save(Match, file="Match.rData")

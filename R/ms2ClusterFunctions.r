@@ -56,33 +56,25 @@ checkMS2 = function(idx, MS2DB){
 #' @param maxMS2 the max number of MS2 belonging to one feature for computing similarity; if appointed, will random select maxMS2 number MS2
 #' @return list, names of list are feature name, and elements are MS2 similarity matrix of MS2 belonging to the feature
 #' @export
-get_ms2Cor_inner = function(MS2DB, idx=NULL, n=2, cores1=1, cores2=1, ppm=30, sn=3, maxMS2=200){
-  
-  if (is.null(idx)) idx=getFeatureHasMS2(MS2DB=MS2DB, n=n)
+get_ms2Cor_inner = function(MS2DB, idx=NULL, n=2, cores=1, ppm=30, sn=3, maxMS2=200){
   
   if (cores >= availableCores()) cores=availableCores()-1
   cl = makeCluster(cores)
-  # result = mclapply(idx, function(id){
-  #   MS2_set = checkMS2(id, MS2DB = MS2DB)$MS2
-  #   if (!is.null(maxMS2)){
-  #     if (length(MS2_set) > maxMS2) MS2_set = sample(MS2_set, maxMS2)
-  #   } 
-  #   corMatrix = get_multiple_ms2Cor(MS2_set = MS2_set, cores=cores2, ppm=ppm, sn=sn)
-  #   rownames(corMatrix) = colnames(corMatrix) = names(MS2_set)
-  #   corMatrix
-  # }, mc.cores=cores1)
+  registerPackage(cl)
   
-  result = parLapply(cl, idx, function(id){
+  if (is.null(idx)) idx=getFeatureHasMS2(MS2DB=MS2DB, n=n)
+  result = lapply(idx, function(id){
     MS2_set = checkMS2(id, MS2DB = MS2DB)$MS2
     if (!is.null(maxMS2)){
       if (length(MS2_set) > maxMS2) MS2_set = sample(MS2_set, maxMS2)
     }
-    corMatrix = get_multiple_ms2Cor(MS2_set = MS2_set, cores=cores2, ppm=ppm, sn=sn)
+    corMatrix = get_multiple_ms2Cor(MS2_set = MS2_set, cl=cl, ppm=ppm, sn=sn)
     rownames(corMatrix) = colnames(corMatrix) = names(MS2_set)
     corMatrix
   })
-  
   names(result) = idx
+  
+  stopCluster(cl)
   
   return(result)
 }
@@ -159,12 +151,14 @@ get_MS2_cor_with_mz = function(MS2_set, cores=2, absMz=0.04){
   
   if (cores >= availableCores()) cores=availableCores()-1
   cl = makeCluster(cores)
+  registerPackage(cl)
   
+  registerParentVars(cl)
   score = parLapply(cl, MS2_set, function(x){
     mz.exp = x$mz
     spec.exp = x$MS2; colnames(spec.exp)[1:2] = c("mz","intensity")
     
-    score1 = parLapply(makeCluster(1), MS2_set, function(y){
+    score1 = lapply(MS2_set, function(y){
       mz.lib = y$mz
       if (abs(mz.lib - mz.exp) > absMz) return(NA)
       
@@ -179,6 +173,8 @@ get_MS2_cor_with_mz = function(MS2_set, cores=2, absMz=0.04){
     score2 = unlist(score1)
     return(score2)
   })  
+  stopCluster(cl)
+  
   score = do.call(rbind, score)
   diag(score) = NA
   colnames(score) = rownames(score) = names(MS2_set)

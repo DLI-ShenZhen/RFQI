@@ -85,10 +85,13 @@ getFDR = function(score, ms2_inner_score, ratio=0.1){
 #' @export
 get_identify = function(lib, MS2DB, MS2_inner_cor, MS1_idx=NULL, absMz = 0.015,
                         adduct="RP_pos", cores=1){
-  meta.precursor = add_adduct(lib=lib, type = adduct)
+  
   if (cores >= availableCores()) cores=availableCores()-1
   cl = makeCluster(cores)
+  registerPackage(cl)
   
+  meta.precursor = add_adduct(lib=lib, type = adduct)
+
   # if appoint MS1_idx, only identify MS1_idx, else identify all features with MS2 
   if (!is.null(MS1_idx)){
     MS1_index=MS1_idx
@@ -97,26 +100,9 @@ get_identify = function(lib, MS2DB, MS2_inner_cor, MS1_idx=NULL, absMz = 0.015,
   }
   MS2_to_MS1 = MS2DB$MS2_to_MS1
   
-  # score = mclapply(MS1_index, function(idx){
-  #   
-  #   MS2.idx = which(MS2_to_MS1[,"MS1"] %in% idx)
-  #   MS2.idx.mz = median(MS2_to_MS1[MS2.idx,"precursorMZ"])
-  #   
-  #   mz.filter = abs(MS2.idx.mz - as.numeric(meta.precursor)) <= absMz
-  #   mz.filter = which(mz.filter)
-  #   axe.col = ceiling(mz.filter / nrow(meta.precursor))
-  #   axe.row = mz.filter - (axe.col-1)*nrow(meta.precursor)
-  #   
-  #   lib.temp = lib$spectrum[rownames(meta.precursor)[axe.row]]
-  #   
-  #   idx.MS2 = MS2DB$MS2[MS2.idx]
-  #   if (idx %in% names(MS2_inner_cor)) idx.MS2 = MS2DB$MS2[rownames(MS2_inner_cor[[idx]])]
-  #   
-  #   # compare db.MS2 and idx.MS2
-  #   score = get_MS2_cor(MS2_set1 = idx.MS2, MS2_set2 = lib.temp)
-  #   return(list(score=score, adduct=colnames(meta.precursor)[axe.col]))
-  # }, mc.cores=cores) 
+  # parallel computing
   
+  registerParentVars(cl)
   score = parLapply(cl, MS1_index, function(idx){
 
     MS2.idx = which(MS2_to_MS1[,"MS1"] %in% idx)
@@ -136,6 +122,8 @@ get_identify = function(lib, MS2DB, MS2_inner_cor, MS1_idx=NULL, absMz = 0.015,
     score = get_MS2_cor(MS2_set1 = idx.MS2, MS2_set2 = lib.temp)
     return(list(score=score, adduct=colnames(meta.precursor)[axe.col]))
   })
+  
+  stopCluster(cl)
   
   # voting2
   ID = lapply(1:length(score), function(i, cutoff=0.5){
@@ -175,6 +163,9 @@ get_identify = function(lib, MS2DB, MS2_inner_cor, MS1_idx=NULL, absMz = 0.015,
   ID = do.call(rbind, ID); 
   colnames(ID) = c("ScoreMedian", "ScoreMax", "ScoreSD", "FDRFilter", "num_pros", "num_cons", "ratio", "labid", "adduct")
   rownames(ID) = MS1_index
+  
+  print(ID)
+  
   ID_filter = ID[!is.na(ID[,"ScoreMax"]),,drop=FALSE]
   
   if (nrow(ID_filter)==0){
@@ -189,6 +180,7 @@ get_identify = function(lib, MS2DB, MS2_inner_cor, MS1_idx=NULL, absMz = 0.015,
   }
   names(score) = MS1_index
   
+  print(score)
   return(list(anno=anno, score=score))
 }
 

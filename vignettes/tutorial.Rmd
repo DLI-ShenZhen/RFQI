@@ -140,7 +140,8 @@ for (i in 2:nrow(distri[[1]])){
 If we do not appoint feature ID, get_ms2Cor_inner() will compute similarity matrix for all features having minimum MS2
 
 ```{r}
-db.MS2.subset = list(MS2=db.MS2$MS2[1:500], MS2_to_MS1=db.MS2$MS2_to_MS1[1:500,]) # this line is only for test
+# db.MS2.subset = list(MS2=db.MS2$MS2[1:500], MS2_to_MS1=db.MS2$MS2_to_MS1[1:500,]) # this line is only for test
+db.MS2.subset = db.MS2
 ms2InnerCor = get_ms2Cor_inner(MS2DB = db.MS2.subset,cores = 2, n=2, maxMS2 = 100)
 ```
 

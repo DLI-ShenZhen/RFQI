@@ -1,5 +1,5 @@
 ---
-title: "LC-MS/MS based untarget metabolimics analysis using XYMeta"
+title: "A reference feature based method for quantification and identification of LC-MS based untargeted metabolomics"
 author: "luanenhui"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
@@ -20,7 +20,7 @@ knitr::opts_chunk$set(
 
 ## Introduction
 
-XYMeta is a LC-MS/MS based untargeted metabolomics analysis pipeline.
+RFQI is a LC-MS/MS based untargeted metabolomics analysis pipeline.
 
 ## Module
 
@@ -38,14 +38,14 @@ XYMeta is a LC-MS/MS based untargeted metabolomics analysis pipeline.
 ### build reference feature table
 
 ```{r}
-library(xymeta)
-options(stringsAsFactors = TRUE)
+library(RFQI)
+options(stringsAsFactors = FALSE)
 ```
 
 First, we need to build a reference a feature table using a set of mzxml files.
 
 ```{r, include=TRUE}
-files <- dir(system.file(package="xymeta", dir="extdata"), 
+files <- dir(system.file(package="RFQI", dir="extdata"), 
               full.name=TRUE, 
               pattern="mzXML$")
 param = new("ParamSet", binSize=0.25, peakwidth=c(2,30), ppm=10, noise=0, absMz=0.005, absRt=15)
@@ -55,7 +55,7 @@ We also need to set a reference mzXML
 
 ```{r}
 refFile = files[1]
-files = files[-1]
+files = files[2]
 ```
 
 Then we extract peaks from mzXML files and group them. This step is time-consuming, we can save the result for later use
@@ -74,7 +74,7 @@ str(features, max.level = 1)
 
 We have generate a features, so you can simply load it into R enviroment
 ```{r}
-# data("features", package="xymeta")
+# data("features", package="RFQI")
 ```
 
 ### Mapping MS2 to a reference feature table
@@ -87,7 +87,7 @@ as soon as they are generated in the same enviroment (e.g. same tissue type, sam
 getMS2FromFiles function receive mzXML files as input, and output a list. 
 
 ```{r}
-files <- dir(system.file(package="xymeta", dir="extdata"), full.name=TRUE, pattern="mzXML$")
+files <- dir(system.file(package="RFQI", dir="extdata"), full.name=TRUE, pattern="mzXML$")
 MS2 = getMS2FromFiles(files=files, ref_file = refFile)
 str(MS2, max.level = 1)
 ```
@@ -119,7 +119,7 @@ db.MS2 = align_MS2_to_MS1(ms2Info = MS2, features = features)
 
 ### Build MS2 similarity distribution
 
-* xymeta use multiple MS2 to identify one feature. First, we need to build an MS2 similarity distribution using MS2 belonging to the same feature *
+* RFQI use multiple MS2 to identify one feature. First, we need to build an MS2 similarity distribution using MS2 belonging to the same feature *
 
 Next, we calculate MS2 similarity matrix belonging to same feature
 The time complexity is O(n2), where n represents the number of MS2 belonging the the same feature, we can limit the max number using maxMS2 parameter
@@ -127,7 +127,7 @@ The time complexity is O(n2), where n represents the number of MS2 belonging the
 ```{r}
 # we can calcalate similarity distribution for one feature
 idx = getFeatureHasMS2(MS2DB=db.MS2, n=2)  # n is the minimum number of MS2 belonging to the same feature
-distri = get_ms2Cor_inner(MS2DB = db.MS2, cores1=1, cores2=3, maxMS2 = 100, idx=idx[1])
+distri = get_ms2Cor_inner(MS2DB = db.MS2, cores=2, maxMS2 = 100, idx=idx[1])
 ```
 
 ```{r}
@@ -140,7 +140,8 @@ for (i in 2:nrow(distri[[1]])){
 If we do not appoint feature ID, get_ms2Cor_inner() will compute similarity matrix for all features having minimum MS2
 
 ```{r}
-ms2InnerCor = get_ms2Cor_inner(MS2DB = db.MS2,cores1 = 3, cores2 = 1, n=2, maxMS2 = 100)
+db.MS2.subset = list(MS2=db.MS2$MS2[1:500], MS2_to_MS1=db.MS2$MS2_to_MS1[1:500,]) # this line is only for test
+ms2InnerCor = get_ms2Cor_inner(MS2DB = db.MS2.subset,cores = 2, n=2, maxMS2 = 100)
 ```
 
 ### Identification
@@ -149,15 +150,17 @@ Now, we can identify features.
 Identification is based on existing standard metabolites MS2 spectrum. We have offer a standard MS2 spectrum database.
 
 ```{r}
-data("spectrumDB", package = "xymeta")
+data("spectrumDB", package = "RFQI")
 str(spectrumDB, max.level = 1)
 ```
 
-First, we need match features' m/z and standar metabolites m/z. As metabolites have multiple possible adduct when ionization, we need appoint the liquidChromatography column type and ESI mode (i.e, positive or negative). XYMeta has offer a list of adduct corresponding to each colum-mode, so you just need to set adduct="RP_pos", etc.
+First, we need match features' m/z and standar metabolites m/z. As metabolites have multiple possible adduct when ionization, we need appoint the liquidChromatography column type and ESI mode (i.e, positive or negative). RFQI has offer a list of adduct corresponding to each colum-mode, so you just need to set adduct="RP_pos", etc.
 
 ```{r}
-anno = get_identify(lib = spectrumDB, MS2DB = db.MS2, MS2_inner_cor = ms2InnerCor, absMz = 0.045, adduct="RP_pos", cores=3)
+print("beginning identify")
+anno = get_identify(lib = spectrumDB, MS2DB = db.MS2.subset, MS2_inner_cor = ms2InnerCor, absMz = 0.045, adduct="RP_pos", cores=3)
 str(anno, max.level = 1)
+print("end identify")
 ```
 
 ### Quantification
@@ -167,11 +170,11 @@ We have build a reference feature table, and using MS2 to annotate it. All we ne
 ```{r}
 result = list()
 for (file in files){
-  result[[file]] = getPeaks_L(file = file, peak_range = features$group_FT, ref_file = refFile, MS1=TRUE, step=0.1, MS2=FALSE)$peaks[,"into"]
+  result[[file]] = getPeaks_L(file = file, peak_range = features$group_FT, ref_file = refFile, MS1=TRUE, step=0.1, MS2=FALSE)$peaks[,"into",drop=FALSE]
 }
 intensity = do.call(cbind,result)
 colnames(intensity) = names(result)
-str(result, max.level = 1)
+str(intensity, max.level = 1)
 ```
 
 

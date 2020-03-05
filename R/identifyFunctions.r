@@ -164,8 +164,6 @@ get_identify = function(lib, MS2DB, MS2_inner_cor, MS1_idx=NULL, absMz = 0.015,
   colnames(ID) = c("ScoreMedian", "ScoreMax", "ScoreSD", "FDRFilter", "num_pros", "num_cons", "ratio", "labid", "adduct")
   rownames(ID) = MS1_index
   
-  print(ID)
-  
   ID_filter = ID[!is.na(ID[,"ScoreMax"]),,drop=FALSE]
   
   if (nrow(ID_filter)==0){
@@ -179,8 +177,6 @@ get_identify = function(lib, MS2DB, MS2_inner_cor, MS1_idx=NULL, absMz = 0.015,
     anno = cbind(anno, metabolite)
   }
   names(score) = MS1_index
-  
-  print(score)
   return(list(anno=anno, score=score))
 }
 

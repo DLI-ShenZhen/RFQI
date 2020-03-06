@@ -1,4 +1,4 @@
-RFQI is depends on R-3.4.4, R-3.6 is not suitable
+RFQI is depends on R-3.4.4 OR R-3.5.3;  R-3.6 is not suitable
 ---
 ## Installation
 ### Install R-3.4.4 and dependency packages

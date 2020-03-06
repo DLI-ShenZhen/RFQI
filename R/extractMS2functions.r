@@ -143,6 +143,7 @@ align_MS2_to_MS1 = function(ms2Info, features, cores=3){
   # peak_range = features$group_FT
   peak_range = features$group_FT[,c("mzmin","mzmax","rtmin","rtmax")]
   peak_range = cbind(peak_range, id_df=1:nrow(peak_range))    # add id_df
+  peak_range = as.matrix(peak_range)
   mode(peak_range) = "numeric"
   # sort peak_range based on mzmin
   peak_range = peak_range[order(peak_range[,"mzmin"]),]

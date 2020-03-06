@@ -46,6 +46,7 @@ convert_char_to_num = function(x, prefix="FT"){
 #' @slot absRt numeric(1)
 #' @slot binSize numeric(1): used for alignment
 #' @rdname ParamSet
+#' @export
 setClass("ParamSet", slots=list(peakwidth="numeric", ppm="numeric", noise="numeric", absMz="numeric", absRt="numeric", binSize="numeric"),
          prototype = list(peakwidth=c(2,30), ppm=10, noise=0, absMz = 0.015, absRt=50, binSize=0.25))
 

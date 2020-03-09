@@ -85,11 +85,8 @@ getFDR = function(score, ms2_inner_score, ratio=0.1){
 #' @export
 get_identify = function(lib, MS2DB, MS2_inner_cor, MS1_idx=NULL, absMz = 0.015,
                         adduct="RP_pos", cores=1){
-  
-  if (cores >= availableCores()) cores=availableCores()-1
-  cl = makeCluster(cores)
-  registerPackage(cl)
-  
+  cores = min(cores, availableCores()-1)
+
   meta.precursor = add_adduct(lib=lib, type = adduct)
 
   # if appoint MS1_idx, only identify MS1_idx, else identify all features with MS2 
@@ -101,9 +98,7 @@ get_identify = function(lib, MS2DB, MS2_inner_cor, MS1_idx=NULL, absMz = 0.015,
   MS2_to_MS1 = MS2DB$MS2_to_MS1
   
   # parallel computing
-  
-  registerParentVars(cl)
-  score = parLapply(cl, MS1_index, function(idx){
+  score = mclapply(MS1_index, function(idx){
 
     MS2.idx = which(MS2_to_MS1[,"MS1"] %in% idx)
     MS2.idx.mz = median(MS2_to_MS1[MS2.idx,"precursorMZ"])
@@ -121,9 +116,7 @@ get_identify = function(lib, MS2DB, MS2_inner_cor, MS1_idx=NULL, absMz = 0.015,
     # compare db.MS2 and idx.MS2
     score = get_MS2_cor(MS2_set1 = idx.MS2, MS2_set2 = lib.temp)
     return(list(score=score, adduct=colnames(meta.precursor)[axe.col]))
-  })
-  
-  stopCluster(cl)
+  }, mc.cores=cores)
   
   # voting2
   ID = lapply(1:length(score), function(i, cutoff=0.5){

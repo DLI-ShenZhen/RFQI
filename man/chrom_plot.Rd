@@ -4,7 +4,8 @@
 \alias{chrom_plot}
 \title{plot EIC}
 \usage{
-chrom_plot(f.in, refFile = NULL, features, idx, mzr = NULL, rtr = NULL)
+chrom_plot(f.in, refFile = NULL, features, idx, mzr = NULL,
+  rtr = NULL, col = NULL)
 }
 \arguments{
 \item{f.in}{path of mzxml files}
@@ -18,6 +19,8 @@ chrom_plot(f.in, refFile = NULL, features, idx, mzr = NULL, rtr = NULL)
 \item{mzr}{m/z range, if appointed, plot mzr area EIC}
 
 \item{rtr}{rt range, if appointed, plot rtr area EIC}
+
+\item{col}{colours for each sample, if not appointed, using brewer.pal(9, "Set3")}
 }
 \value{
 a plot

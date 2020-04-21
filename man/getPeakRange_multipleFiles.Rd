@@ -4,14 +4,8 @@
 \alias{getPeakRange_multipleFiles}
 \title{group peaks from multiple files}
 \usage{
-getPeakRange_multipleFiles(
-  f.in = NULL,
-  peaks = NULL,
-  ref = NULL,
-  param = new("ParamSet"),
-  cores = 2,
-  prefix = "FT"
-)
+getPeakRange_multipleFiles(f.in = NULL, peaks = NULL, ref = NULL,
+  param = new("ParamSet"), cores = 2, prefix = "FT")
 }
 \arguments{
 \item{f.in}{input}

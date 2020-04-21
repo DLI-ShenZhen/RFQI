@@ -21,6 +21,7 @@
 #' @importFrom stats sd t.test
 #' @importFrom utils data
 #' @importFrom Biobase featureData
+#' @importFrom igraph graph_from_data_frame plot.igraph
 #' 
 loadPackage = function(){}
 

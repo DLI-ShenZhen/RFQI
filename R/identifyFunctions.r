@@ -111,7 +111,7 @@ get_identify = function(lib, MS2DB, MS2_inner_cor, MS1_idx=NULL, absMz = 0.015,
     lib.temp = lib$spectrum[rownames(meta.precursor)[axe.row]]
 
     idx.MS2 = MS2DB$MS2[MS2.idx]
-    if (idx %in% names(MS2_inner_cor)) idx.MS2 = MS2DB$MS2[rownames(MS2_inner_cor[[idx]])]
+    # if (idx %in% names(MS2_inner_cor)) idx.MS2 = MS2DB$MS2[rownames(MS2_inner_cor[[idx]])]
 
     # compare db.MS2 and idx.MS2
     score = get_MS2_cor(MS2_set1 = idx.MS2, MS2_set2 = lib.temp)
@@ -166,7 +166,7 @@ get_identify = function(lib, MS2DB, MS2_inner_cor, MS1_idx=NULL, absMz = 0.015,
     or = order(rownames(ID_filter))
     anno = ID_filter[or,,drop=FALSE]
     
-    metabolite =  lib$Info[anno[,"labid"], -1]
+    metabolite =  lib$Info[anno[,"labid"], -1,drop=FALSE]
     anno = cbind(anno, metabolite)
   }
   names(score) = MS1_index

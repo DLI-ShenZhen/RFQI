@@ -206,28 +206,9 @@ checkFT = function(features, idx){
 #' @export
 get_MS2_cor = function(MS2_set1, MS2_set2, cores=2){
   
-  # score = mclapply(MS2_set1, function(x){
-  #   spec.exp = as.matrix(x); 
-  #   colnames(spec.exp)[1:2] = c("mz","intensity")
-  #   
-  #   # compare each with MS2 spectrum in MS2_set2 with spec.exp
-  #   score1 = lapply(MS2_set2, function(y){
-  #     if (is.null(y)) return(0)
-  #     spec.lib = as.matrix(y)[,1:2]; 
-  #     colnames(spec.lib)[1:2] = c("mz","intensity")
-  #     if (nrow(spec.exp)==0 | nrow(spec.lib)==0) return(0)
-  #     score = GetMatchResult(spec.exp=spec.exp, spec.lib=spec.lib)[[1]]
-  #     return(score)
-  #   })
-  #   score2 = unlist(score1)
-  #   return(score2)
-  # }, mc.cores=cores)
-  
   if (cores >= availableCores()) cores=availableCores()-1
-  cl = makeCluster(cores)
-  clusterEvalQ(cl, "require(RFQI)")
   
-  score = parLapply(cl, MS2_set1, function(x){
+  score = mclapply(MS2_set1, function(x){
     spec.exp = as.matrix(x);
     colnames(spec.exp)[1:2] = c("mz","intensity")
 
@@ -242,8 +223,7 @@ get_MS2_cor = function(MS2_set1, MS2_set2, cores=2){
     })
     score2 = unlist(score1)
     return(score2)
-  })
-  stopCluster(cl)
+  }, mc.cores=cores)
   
   score = do.call(rbind, score)
   return(score)

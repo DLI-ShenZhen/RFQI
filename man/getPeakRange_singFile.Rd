@@ -5,7 +5,8 @@
 \title{group overlap peaks in a peak table
 getPeakRange_singleFiles is to group peaks from a peaks table}
 \usage{
-getPeakRange_singFile(peaks, cores = 2, cl = NULL, param = new("ParamSet"))
+getPeakRange_singFile(peaks, cores = 2, cl = NULL,
+  param = new("ParamSet"))
 }
 \arguments{
 \item{peaks}{matrix}

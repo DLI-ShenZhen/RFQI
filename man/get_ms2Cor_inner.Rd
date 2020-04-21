@@ -4,16 +4,8 @@
 \alias{get_ms2Cor_inner}
 \title{Compute MS2 correlation belonging to identical feature}
 \usage{
-get_ms2Cor_inner(
-  MS2DB,
-  idx = NULL,
-  n = 2,
-  cores1 = 1,
-  cores2 = 3,
-  ppm = 30,
-  sn = 3,
-  maxMS2 = 200
-)
+get_ms2Cor_inner(MS2DB, idx = NULL, n = 2, cores1 = 1, cores2 = 3,
+  ppm = 30, sn = 3, maxMS2 = 200)
 }
 \arguments{
 \item{MS2DB}{db.MS2 object}

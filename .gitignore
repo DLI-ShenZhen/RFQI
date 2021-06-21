@@ -1,23 +1,18 @@
-reated by https://www.gitignore.io/api/r
-# Edit at https://www.gitignore.io/?templates=r
-
-### R ###
 # History files
 .Rhistory
 .Rapp.history
 
 # Session Data files
-# .RData
-# .RDataTmp
+.RData
 
 # User-specific files
-# .Ruserdata
+.Ruserdata
 
 # Example code in package build process
 *-Ex.R
 
 # Output files from R CMD build
-# /*.tar.gz
+/*.tar.gz
 
 # Output files from R CMD check
 /*.Rcheck/
@@ -40,10 +35,11 @@ reated by https://www.gitignore.io/api/r
 *.utf8.md
 *.knit.md
 
-### R.Bookdown Stack ###
-# R package: bookdown caching files
-/*_files/
+# R Environment Variables
+.Renviron
 
-# End of https://www.gitignore.io/api/r
-doc
-Meta
+# pkgdown site
+docs/
+
+# translation temp files
+po/*~

@@ -4,11 +4,13 @@
 \name{spectrumDB}
 \alias{spectrumDB}
 \title{standard metabolite MS2 spectrum}
-\format{A list containing two elements
+\format{
+A list containing two elements
 \describe{
   \item{spectrum}{standard MS2 spectrum, each spectrum is a list, whose name is the metabolite ID, and value is spectrum}
   \item{Info}{metabolite information, including Labid, HMDBID, mz, formula, and HMDB name}
-}}
+}
+}
 \source{
 data("spectrumDB", package="RFQI")
 }

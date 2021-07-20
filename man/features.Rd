@@ -4,11 +4,13 @@
 \name{features}
 \alias{features}
 \title{Features resulting from mzXML files in extdata dir}
-\format{A list containing two data frame
+\format{
+A list containing two data frame
 \describe{
   \item{group_FT}{features after combining peaks}
   \item{peaks}{peaks extracted from mzXML files using CentWave method}
-}}
+}
+}
 \source{
 data("features", package="RFQI")
 }

@@ -4,8 +4,15 @@
 \alias{get_identify}
 \title{Identify features based on multiple MS2 similarity}
 \usage{
-get_identify(lib, MS2DB, MS2_inner_cor, MS1_idx = NULL, absMz = 0.015,
-  adduct = "RP_pos", cores = 1)
+get_identify(
+  lib,
+  MS2DB,
+  MS2_inner_cor,
+  MS1_idx = NULL,
+  absMz = 0.015,
+  adduct = "RP_pos",
+  cores = 1
+)
 }
 \arguments{
 \item{lib}{standard metabolite MS2 spectrum database, We have offer a database containing 3000 metabolites, using \code{data("spectrumDB", package="RFQI")}}

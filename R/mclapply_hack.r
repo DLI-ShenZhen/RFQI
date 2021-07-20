@@ -91,6 +91,7 @@ mclapply.hack <- function(X, FUN, mc.cores, ...) {
 #' If the OS is Windows, set mclapply to the
 #' the hackish version. Otherwise, leave the
 #' definition alone.
+#' @export
 mclapply <- switch( Sys.info()[['sysname']],
                     Windows = {mclapply.hack}, 
                     Linux   = {mclapply},

@@ -4,8 +4,14 @@
 \alias{getPeaks_L}
 \title{Extract spectrum from mzXML files}
 \usage{
-getPeaks_L(file, peak_range = NULL, ref_file = NULL, MS1 = TRUE,
-  step = 0.1, MS2 = FALSE)
+getPeaks_L(
+  file,
+  peak_range = NULL,
+  ref_file = NULL,
+  MS1 = TRUE,
+  step = 0.1,
+  MS2 = FALSE
+)
 }
 \arguments{
 \item{file}{path of one mzxml file}

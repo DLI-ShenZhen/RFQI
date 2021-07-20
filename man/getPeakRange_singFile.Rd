@@ -5,15 +5,12 @@
 \title{group overlap peaks in a peak table
 getPeakRange_singleFiles is to group peaks from a peaks table}
 \usage{
-getPeakRange_singFile(peaks, cores = 2, cl = NULL,
-  param = new("ParamSet"))
+getPeakRange_singFile(peaks, cores = 2, param = new("ParamSet"))
 }
 \arguments{
 \item{peaks}{matrix}
 
 \item{cores}{numeric, for parallel computing}
-
-\item{cl}{parallel cluster, if cl is null, cluster is built based on cores}
 
 \item{param}{ParamSet object}
 }

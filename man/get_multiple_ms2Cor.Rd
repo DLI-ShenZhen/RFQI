@@ -5,8 +5,7 @@
 \alias{get_MS2_cor_inner}
 \title{compute pair cosine similarity score of multiple MS2}
 \usage{
-get_multiple_ms2Cor(MS2_set, cores = 2, cl = NULL, ppm = 30,
-  sn = 3)
+get_multiple_ms2Cor(MS2_set, cores = 2, cl = NULL, ppm = 30, sn = 3)
 }
 \arguments{
 \item{MS2_set}{a list whose elements are MS2 spectrum}

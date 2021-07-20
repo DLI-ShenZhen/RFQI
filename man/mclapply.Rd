@@ -4,7 +4,18 @@
 \alias{mclapply}
 \title{mclapply}
 \usage{
-mclapply(X, FUN, mc.cores, ...)
+mclapply(
+  X,
+  FUN,
+  ...,
+  mc.preschedule = TRUE,
+  mc.set.seed = TRUE,
+  mc.silent = FALSE,
+  mc.cores = getOption("mc.cores", 2L),
+  mc.cleanup = TRUE,
+  mc.allow.recursive = TRUE,
+  affinity.list = NULL
+)
 }
 \description{
 If the OS is Windows, set mclapply to the

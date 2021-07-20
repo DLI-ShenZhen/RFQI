@@ -8,10 +8,12 @@
 #' @import graphics
 #' @import RColorBrewer
 #' @import future
+#' @import BiocParallel
 #' @importFrom MSnbase readMSData selectFeatureData centroided
 #' @importFrom xcms CentWaveParam ObiwarpParam
 #' @importFrom xcms findChromPeaks
 #' @importFrom xcms chromPeaks adjustRtime
+#' @importFrom BiocParallel register MulticoreParam SnowParam
 #' @importFrom parallel mclapply makeCluster parLapply stopCluster clusterExport clusterEvalQ
 #' @importFrom future availableCores
 #' @importFrom scales alpha

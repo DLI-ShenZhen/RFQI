@@ -4,8 +4,7 @@
 \alias{judgePeakOverlap}
 \title{Whether peak area overlap}
 \usage{
-judgePeakOverlap(ref, alt, Mz = TRUE, Rt = TRUE, absMz = 0,
-  absRt = 15)
+judgePeakOverlap(ref, alt, Mz = TRUE, Rt = TRUE, absMz = 0, absRt = 15)
 }
 \arguments{
 \item{ref, alt}{a numeric vector, orderd in "mzmin","mzmax","rtmin","rtmax"}

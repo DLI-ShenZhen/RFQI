@@ -4,11 +4,13 @@
 \name{MS2_spec}
 \alias{MS2_spec}
 \title{MS2 spectrum resulting from getMS2FromFiles function}
-\format{A list containing two elements
+\format{
+A list containing two elements
 \describe{
   \item{MS2}{MS2 spectrum}
   \item{presursorInfo}{precursor information corresponding MS2 spectrum}
-}}
+}
+}
 \source{
 data("MS2_spec", package="RFQI")
 }

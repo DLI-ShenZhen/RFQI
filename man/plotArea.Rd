@@ -4,7 +4,14 @@
 \alias{plotArea}
 \title{Function plotArea is used to plot feature area of one FT or two}
 \usage{
-plotArea(refPeaks, group = NULL, main = "", mzr = NULL, rtr = NULL)
+plotArea(
+  refPeaks,
+  group = NULL,
+  main = "",
+  mzr = NULL,
+  rtr = NULL,
+  cols = c(alpha("red", 0.5), alpha("blue", 0.5))
+)
 }
 \arguments{
 \item{refPeaks}{dataframe or matrix containing columns of c("mzmin","mzmax","rtmin","rtmax")}
@@ -16,6 +23,8 @@ plotArea(refPeaks, group = NULL, main = "", mzr = NULL, rtr = NULL)
 \item{mzr}{m/z range}
 
 \item{rtr}{rt range}
+
+\item{cols}{colors for different group}
 }
 \value{
 plot

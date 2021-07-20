@@ -4,7 +4,7 @@
 \alias{findPeaks_L}
 \title{get peaks from multiple samples(f.in)}
 \usage{
-findPeaks_L(f.in, ref = NULL, param = new("ParamSet"))
+findPeaks_L(f.in, ref = NULL, param = new("ParamSet"), cores = 1)
 }
 \arguments{
 \item{f.in}{a vertor contains paths of mzxml files}

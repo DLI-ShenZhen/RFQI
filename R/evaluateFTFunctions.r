@@ -19,9 +19,10 @@ summary_L = function(df){
 #' @param main title of plot
 #' @param mzr m/z range
 #' @param rtr rt range
+#' @param cols colors for different group
 #' @return plot
 #' @export
-plotArea = function(refPeaks, group=NULL, main="", mzr=NULL, rtr=NULL){
+plotArea = function(refPeaks, group=NULL, main="", mzr=NULL, rtr=NULL, cols=c(alpha("red",0.5), alpha("blue",0.5))){
   # refPeaks = features$group_FT
   
   area = refPeaks[,c("mzmin", "mzmax", "rtmin", "rtmax")]
@@ -61,7 +62,7 @@ plotArea = function(refPeaks, group=NULL, main="", mzr=NULL, rtr=NULL){
   # --- single group plot ----- #
   if(is.null(group)){
     # plot.window(xlim=xlim, ylim=ylim)
-    rect(xleft=area[,"rtmin"], ybottom=area[,"mzmin"], xright=area[,"rtmax"], ytop=area[,"mzmax"], density=-1, angle=45, border=alpha("blue",0.5), lwd=0.5)
+    rect(xleft=area[,"rtmin"], ybottom=area[,"mzmin"], xright=area[,"rtmax"], ytop=area[,"mzmax"], density=-1, angle=45, border=cols[1], lwd=0.5)
   }
   
   # --- two group plot -------- #
@@ -70,8 +71,8 @@ plotArea = function(refPeaks, group=NULL, main="", mzr=NULL, rtr=NULL){
     area.split = split.data.frame(area, f = group, drop=FALSE)
     a = area.split[[1]]
     b = area.split[[2]]
-    rect(xleft=a[,"rtmin"], ybottom=a[,"mzmin"], xright=a[,"rtmax"], ytop=a[,"mzmax"], density=-1, angle=45, border=alpha("blue",0.5), lwd=1)
-    rect(xleft=b[,"rtmin"], ybottom=b[,"mzmin"], xright=b[,"rtmax"], ytop=b[,"mzmax"], density=-1, angle=45, border=alpha("red",0.5), lwd=1)
+    rect(xleft=a[,"rtmin"], ybottom=a[,"mzmin"], xright=a[,"rtmax"], ytop=a[,"mzmax"], density=-1, angle=45, border=cols[1], lwd=1)
+    rect(xleft=b[,"rtmin"], ybottom=b[,"mzmin"], xright=b[,"rtmax"], ytop=b[,"mzmax"], density=-1, angle=45, border=cols[2], lwd=1)
     
   }
   

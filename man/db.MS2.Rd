@@ -4,11 +4,13 @@
 \name{db.MS2}
 \alias{db.MS2}
 \title{MS2 spectrum Mapping to features}
-\format{A list containing two elements
+\format{
+A list containing two elements
 \describe{
   \item{MS2}{MS2 spectrum}
   \item{presursorInfo}{precursor information corresponding MS2 spectrum}
-}}
+}
+}
 \source{
 data("db.MS2", package="RFQI")
 }

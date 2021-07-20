@@ -1,3 +1,17 @@
+#' get file name from fll path
+#'
+#' get file name from full path, e.g. "/A/B/C/D.txt" generates "D"
+#'
+#' @param path full path to a file containing format suffix
+#' @param prefix character, this will be added to the head of x
+#' @param n the result length of character
+#' @return filename
+#' @export
+getFileName = function(path){
+  tmp = basename(path)
+  strsplit(tmp,split=".", fixed=TRUE)[[1]][1]
+}
+
 #' ID conversion, used to encoding rownames and colnames
 #'
 #' convert a number into a character with a prefix in fixed length
@@ -65,16 +79,23 @@ setClass("ParamSet", slots=list(peakwidth="numeric", ppm="numeric", noise="numer
 #'              pattern="mzXML$")
 #' param = new("ParamSet", binSize=0.25)
 #' peaks = findPeaks_L(f.in=files, ref=NULL, param=param)
-findPeaks_L = function(f.in, ref = NULL, param = new("ParamSet")){
+findPeaks_L = function(f.in, ref = NULL, param = new("ParamSet"), cores=1){
 
   cwp = CentWaveParam(peakwidth=param@peakwidth, ppm=param@ppm, noise=param@noise)   ## Using CentWave algorithm to find peaks
   obi = ObiwarpParam(binSize=param@binSize, centerSample = 1, localAlignment = FALSE)
   
+  cores = min(future::availableCores()-1, cores)
+  BPPARAM <- switch( Sys.info()[['sysname']],
+                      Windows = SnowParam(cores), 
+                      Linux   = MulticoreParam(cores),
+                      Darwin  = MulticoreParam(cores))
+  register(BPPARAM)
+  
   if (!is.null(ref)){f.in = c(ref, f.in)}
 
   # Read data and find peaks using centwave
-  raw_data = readMSData(files=f.in, mode="onDisk", msLevel. = NULL, centroided.=TRUE)
-  xdata = findChromPeaks(raw_data, param=cwp)
+  raw_data = readMSData(files=f.in, mode="onDisk", msLevel. = 1, centroided.=TRUE)
+  xdata = findChromPeaks(raw_data, param=cwp, BPPARAM=bpparam())
 
   # if has reference sample, do retention time correction
   if (is.null(ref)){
@@ -216,31 +237,22 @@ group_FT.FUN = function(i, df, absMz=0.01, absRt=15){
 #' 
 #' @param peaks matrix
 #' @param cores numeric, for parallel computing
-#' @param cl parallel cluster, if cl is null, cluster is built based on cores
 #' @param param ParamSet object
 #' @return list
 #' @export
-getPeakRange_singFile = function(peaks, cores=2, cl=NULL, param=new("ParamSet")){
+getPeakRange_singFile = function(peaks, cores=2, param=new("ParamSet")){
   # peaks = peaks_adjustRT[1:3000,]
   absMz = param@absMz
   absRt = param@absRt
+  cores = min(cores, availableCores()-1)
   
   if (!("id" %in% colnames(peaks))){peaks = cbind(peaks, id=1:nrow(peaks))}
 
   or = order(as.numeric(peaks[,"mzmin"]))
   peaks = peaks[or,]
 
-  # group_FT = mclapply(1:nrow(peaks), group_FT.FUN, df=peaks, absMz=absMz, absRt=absRt, mc.cores=cores)
   # parallel computation
-  if (is.null(cl)){
-    if (cores >= availableCores()) cores=availableCores()-1
-    cl = makeCluster(cores)
-    registerPackage()
-    group_FT = parLapply(cl, 1:nrow(peaks), group_FT.FUN, df=peaks, absMz=absMz, absRt=absRt)
-    stopCluster(cl)
-  } else {
-    group_FT = parLapply(cl, 1:nrow(peaks), group_FT.FUN, df=peaks, absMz=absMz, absRt=absRt)
-  }
+  group_FT = mclapply(1:nrow(peaks), group_FT.FUN, df=peaks, absMz=absMz, absRt=absRt, mc.cores=cores)
   
   temp = group_FT
   unique_index = which(sapply(group_FT, length)==1)
@@ -309,9 +321,7 @@ getPeakRange_singFile = function(peaks, cores=2, cl=NULL, param=new("ParamSet"))
 #' @export
 getPeakRange_multipleFiles = function(f.in=NULL, peaks=NULL, ref=NULL, param = new("ParamSet"), cores=2, prefix="FT"){
 
-  if (cores >= availableCores()) cores=availableCores()-1
-  cl = makeCluster(cores)
-  registerPackage(cl)
+  cores = min(cores, availableCores()-1)
   
   print("beginning to get peaks from each sample")
   # get peak-range. if peaks is not null, return peaks; else extract peaks from multiple files
@@ -319,7 +329,7 @@ getPeakRange_multipleFiles = function(f.in=NULL, peaks=NULL, ref=NULL, param = n
   absRt = param@absRt
   
   if(is.null(peaks)){
-    peaks_adjustRT = findPeaks_L(f.in = f.in, ref=ref,param=param)
+    peaks_adjustRT = findPeaks_L(f.in = f.in, ref=ref,param=param, cores=cores)
   } else{
     peaks_adjustRT = peaks
   }
@@ -344,9 +354,8 @@ getPeakRange_multipleFiles = function(f.in=NULL, peaks=NULL, ref=NULL, param = n
   split_data = split.data.frame(peaks_origin_sort, f=f)
 
   # group peaks of each split, return combine_FT
-  registerParentVars(cl)
   startTime = Sys.time()
-  group_FT.split_data = lapply(split_data, getPeakRange_singFile, cl=cl, param=param)
+  group_FT.split_data = mclapply(split_data, getPeakRange_singFile, param=param, mc.cores=cores)
   # group_FT.split_data = lapply(split_data, getPeakRange_singFile, cores=cores, param=param)
   endTime = Sys.time()
   duration = (as.numeric(endTime) - as.numeric(startTime))/60
@@ -359,7 +368,7 @@ getPeakRange_multipleFiles = function(f.in=NULL, peaks=NULL, ref=NULL, param = n
   # group peaks of combine_FT, return group_FT
   startTime = Sys.time()
   # the comment block can also combine/remove peaks, but consume more time
-  group_FT = getPeakRange_singFile(peaks=combine_FT, cl=cl, param=param)
+  group_FT = getPeakRange_singFile(peaks=combine_FT, cores=cores, param=param)
 
   # remove/combine overlap features
   # group_FT = combine_FT
@@ -391,7 +400,7 @@ getPeakRange_multipleFiles = function(f.in=NULL, peaks=NULL, ref=NULL, param = n
       unique_group = group_FT[-anchor_point,,drop=FALSE]
       overlap_group = group_FT[anchor_point,,drop=FALSE]
 
-      overlap_group = getPeakRange_singFile(peaks=overlap_group, cl=cl, param=new("ParamSet", absMz=0, absRt=0))
+      overlap_group = getPeakRange_singFile(peaks=overlap_group, cores=cores, param=new("ParamSet", absMz=0, absRt=0))
       group_FT = rbind(unique_group, overlap_group)
 
       or = order(as.numeric(group_FT[,"mzmin"]))
@@ -409,8 +418,93 @@ getPeakRange_multipleFiles = function(f.in=NULL, peaks=NULL, ref=NULL, param = n
 
   rownames(group_FT) = sapply(1:nrow(group_FT), convert_num_to_char, n=5, prefix=prefix)
   
-  stopCluster(cl)
-  
   return(list(group_FT=group_FT, peaks=peaks_origin))
   
 }
+
+#' split over-grouped features generated by getPeakRange_multipleFiles 
+#' 
+#' get_splited_features is to split over-grouped features by generated by getPeakRange_multipleFiles through reducing low intensity peaks and re-grouping
+#' 
+#' @param idx feauture id in feature tabel
+#' @param features list containing group_FT(feature table) and peaks(original peaks)
+#' @param param ParamSet object same to that of getPeakRange_multipleFiles
+#' @param ns noise to signal ratio, peaks whose "maxo" or "into" less than ns will be discarded
+#' @param intMethod method to evalute peaks intensity, one of c("maxo", "into")
+#' @return re-grouped feature table corresponding to idx
+#' @export
+get_splited_features = function(idx, features, param = new("ParamSet"), ns=0.1, intMethod="maxo"){
+  # get peaks corresponding to idx feature and filter peaks by ns
+  peaks = checkFT(features, idx=idx)
+  
+  if (intMethod == "maxo"){
+    peaks.ns = as.numeric(peaks[,"maxo"])/max(as.numeric(peaks[,"maxo"]))
+  } else {
+    peaks.ns = as.numeric(peaks[,"into"])/max(as.numeric(peaks[,"into"]))
+  }
+  
+  peaks = peaks[peaks.ns > ns,,drop=FALSE]
+  
+  # group peaks to features according to filtered peaks
+  absMz = param@absMz
+  absRt = param@absRt
+  if (!("id" %in% colnames(peaks))) {
+    peaks = cbind(peaks, id = 1:nrow(peaks))
+  }
+  or = order(as.numeric(peaks[, "mzmin"]))
+  peaks = peaks[or,,drop=FALSE]
+  
+  group_FT = lapply(1:nrow(peaks), group_FT.FUN, df = peaks, absMz = absMz, absRt = absRt)
+  
+  temp = group_FT
+  unique_index = which(sapply(group_FT, length) == 1)
+  unique = temp[unique_index]
+  multiple = temp[-unique_index]
+  unique_FT = unique[!(unlist(unique) %in% unlist(multiple))]
+  multiple_FT = list()
+  while (length(multiple) != 0) {
+    ref = multiple[[1]]
+    combined_idx = c(1)
+    increment = TRUE
+    while (increment) {
+      flag = sapply(multiple, function(alt) {
+        length(intersect(ref, alt)) > 0
+      })
+      flag = setdiff(which(flag), combined_idx)
+      if (length(flag) == 0) {
+        increment = FALSE
+      }
+      else {
+        combined_idx = c(combined_idx, flag)
+        ref = unique(unlist(multiple[combined_idx]))
+      }
+    }
+    multiple = multiple[-combined_idx]
+    multiple_FT[[length(multiple_FT) + 1]] = unlist(ref)
+  }
+  group_FT = c(unique_FT, multiple_FT)
+  combine_FT = lapply(group_FT, function(index, df = peaks) {
+    subset = df[index, , drop = FALSE]
+    FT = subset[1, , drop = TRUE]
+    FT["mzmin"] = min(as.numeric(subset[, "mzmin"]))
+    FT["mzmax"] = max(as.numeric(subset[, "mzmax"]))
+    FT["rtmin"] = min(as.numeric(subset[, "rtmin"]))
+    FT["rtmax"] = max(as.numeric(subset[, "rtmax"]))
+    FT["mz"] = mean(c(as.numeric(FT["mzmin"]), as.numeric(FT["mzmax"])))
+    FT["rt"] = mean(c(as.numeric(FT["rtmin"]), as.numeric(FT["rtmax"])))
+    FT["id"] = paste0(subset[, "id"], collapse = ",")
+    FT["npeaks"] = length(unlist(strsplit(FT["id"], split = ",")))
+    return(FT)
+  })
+  combine_FT = do.call(rbind, combine_FT)
+  or = order(as.numeric(combine_FT[, "mzmin"]))
+  combine_FT = combine_FT[or,,drop=FALSE]
+  
+  combine_FT = cbind(combine_FT, originFT = idx)
+  rownames(combine_FT) = paste(idx, 1:nrow(combine_FT), sep="_")
+  
+  combine_FT
+  
+  # return(combine_FT)
+}
+
